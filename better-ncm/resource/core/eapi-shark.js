@@ -829,6 +829,9 @@ window.XMLHttpRequest = class XMLHttpRequest extends RawXHR {
     send(body) {
         this.reqID = requestIDCounter++;
         this.body = body;
+        if (localStorage.getItem('better-ncm-eapi-shark-enabled') === null) {
+            return super.send(body);
+        }
         console.groupCollapsed('[ES] 请求已发送', this.reqID, this.requestURL);
         console.log(this.requestMethod, this.requestURL);
         {
@@ -859,6 +862,9 @@ window.XMLHttpRequest = class XMLHttpRequest extends RawXHR {
         }
         console.groupEnd();
         this.addEventListener('load', async () => {
+            if (!localStorage.getItem('better-ncm-eapi-shark-enabled')) {
+                return
+            }
             if (this.status === 200 && this.requestURL.startsWith('http')) {
                 const res = new Uint8Array(await this.response.arrayBuffer())
                 

@@ -222,6 +222,12 @@ pub struct CEFBrowserHost {
         *mut CEFBrowserSettings,
         *const CEFPoint,
     ) -> c_void, // Placeholder
+    pub close_dev_tools: unsafe extern "stdcall" fn(
+        *mut CEFBrowserHost,
+    ) -> c_void, // Placeholder
+    pub has_dev_tools: unsafe extern "stdcall" fn(
+        *mut CEFBrowserHost,
+    ) -> c_int, // Placeholder
 }
 
 #[repr(C)]
@@ -262,6 +268,110 @@ impl CEFBrowser {
 }
 
 #[repr(C)]
+pub struct CEFV8Value {
+    pub base: CEFBase,
+    pub(crate) is_valid: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) is_undefined: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) is_null: CallbackFn<CEFV8Value, c_int>,  // Placeholder
+    pub(crate) is_bool: CallbackFn<CEFV8Value, c_int>,  // Placeholder
+    pub(crate) is_int: CallbackFn<CEFV8Value, c_int>,   // Placeholder
+    pub(crate) is_uint: CallbackFn<CEFV8Value, c_int>,  // Placeholder
+    pub(crate) is_double: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) is_date: CallbackFn<CEFV8Value, c_int>,  // Placeholder
+    pub(crate) is_string: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) is_object: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) is_array: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) is_array_buffer: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) is_function: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) is_same: CallbackFn<CEFV8Value, c_int>,  // Placeholder
+    pub(crate) get_bool_value: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) get_int_value: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) get_uint_value: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) get_double_value: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) get_date_value: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) get_string_value: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) is_user_created: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) has_exception: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) get_exception: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) clear_exception: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) will_rethrow_exceptions: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) set_rethrow_exceptions: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) has_value_bykey: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) has_value_byindex: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) delete_value_bykey: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) delete_value_byindex: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) get_value_bykey: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) get_value_byindex: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) set_value_bykey: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) set_value_byindex: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) set_value_byaccessor: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) get_keys: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) set_user_data: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) get_user_data: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) get_externally_allocated_memory: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) adjust_externally_allocated_memory: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) get_array_length: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) get_array_buffer_release_callback: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) neuter_array_buffer: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) get_function_name: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) get_function_handler: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) execute_function: CallbackFn<CEFV8Value, c_int>, // Placeholder
+    pub(crate) execute_function_with_context: CallbackFn<CEFV8Value, c_int>, // Placeholder
+}
+
+impl CEFV8Value {
+    #[doc = ""]
+    pub unsafe fn new_undefined() -> *mut Self {
+        static mut ADDR: usize = 0;
+        if ADDR == 0 {
+            ADDR = crate::get_module_symbol_address("libcef.dll", "cef_v8value_create_undefined")
+                .expect("Can't get cef_v8value_create_undefined");
+        }
+        let cef_v8value_create_undefined: unsafe extern "cdecl" fn() -> *mut CEFV8Value =
+            std::mem::transmute(ADDR);
+        cef_v8value_create_undefined()
+    }
+
+    #[doc = ""]
+    pub unsafe fn new_null() -> *mut Self {
+        static mut ADDR: usize = 0;
+        if ADDR == 0 {
+            ADDR = crate::get_module_symbol_address("libcef.dll", "cef_v8value_create_null")
+                .expect("Can't get cef_v8value_create_undefined");
+        }
+        let cef_v8value_create_null: unsafe extern "cdecl" fn() -> *mut CEFV8Value =
+            std::mem::transmute(ADDR);
+        cef_v8value_create_null()
+    }
+
+    #[doc = ""]
+    pub unsafe fn new_function() -> *mut Self {
+        static mut ADDR: usize = 0;
+        if ADDR == 0 {
+            ADDR = crate::get_module_symbol_address("libcef.dll", "cef_v8value_create_function")
+                .expect("Can't get cef_v8value_create_undefined");
+        }
+        let cef_v8value_create_function: unsafe extern "cdecl" fn() -> *mut CEFV8Value =
+            std::mem::transmute(ADDR);
+        cef_v8value_create_function()
+    }
+}
+
+#[repr(C)]
+pub struct CEFV8Context {
+    pub base: CEFBase,
+    pub(crate) get_task_runner: CallbackFn, // Placeholder
+    pub(crate) get_valid: CallbackFn,       // Placeholder
+    pub(crate) get_browser: CallbackFn,     // Placeholder
+    pub(crate) get_frame: CallbackFn,       // Placeholder
+    pub(crate) get_global: unsafe extern "stdcall" fn(*mut CEFV8Context) -> *mut CEFV8Value, // Placeholder
+    pub(crate) enter: CallbackFn,   // Placeholder
+    pub(crate) exit: CallbackFn,    // Placeholder
+    pub(crate) is_same: CallbackFn, // Placeholder
+    pub(crate) eval: CallbackFn,    // Placeholder
+}
+
+#[repr(C)]
 pub struct CEFFrame {
     pub base: CEFBase,
     pub(crate) is_valid: CallbackFn,     // Placeholder
@@ -286,6 +396,7 @@ pub struct CEFFrame {
     pub(crate) get_parent: CallbackFn,                               // Placeholder
     pub(crate) get_url: CallbackFn,                                  // Placeholder
     pub get_browser: unsafe extern "stdcall" fn(*mut CEFFrame) -> *mut CEFBrowser,
+    pub get_v8context: unsafe extern "stdcall" fn(*mut CEFFrame) -> *mut CEFV8Context,
 }
 
 impl CEFFrame {
@@ -297,6 +408,10 @@ impl CEFFrame {
         unsafe {
             (self.execute_java_script)(self, &mut code.into(), &mut "".into(), 0);
         }
+    }
+
+    pub fn get_v8context(&mut self) -> *mut CEFV8Context {
+        unsafe { (self.get_v8context)(self) }
     }
 }
 

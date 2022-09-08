@@ -74,24 +74,28 @@ unsafe extern "stdcall" fn on_key_event_hook(
             return 1;
         } else if (*event).windows_key_code == VK_F12 {
             let host = ((*browser).get_host)(browser);
-            let mut win_info: CEFWindowInfo = std::mem::zeroed();
+            if ((*host).has_dev_tools)(host) != 0 {
+                ((*host).close_dev_tools)(host);
+            } else {
+                let mut win_info: CEFWindowInfo = std::mem::zeroed();
 
-            win_info.style = WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE;
-            win_info.x = CW_USEDEFAULT;
-            win_info.y = CW_USEDEFAULT;
-            win_info.width = CW_USEDEFAULT;
-            win_info.height = CW_USEDEFAULT;
+                win_info.style = WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE;
+                win_info.x = CW_USEDEFAULT;
+                win_info.y = CW_USEDEFAULT;
+                win_info.width = CW_USEDEFAULT;
+                win_info.height = CW_USEDEFAULT;
 
-            win_info.window_name = "SteveXMH CEFInject DevTools".into();
+                win_info.window_name = "SteveXMH CEFInject DevTools".into();
 
-            let mut settings = CEFBrowserSettings {
-                size: std::mem::size_of::<CEFBrowserSettings>(),
-                ..std::mem::zeroed()
-            };
+                let mut settings = CEFBrowserSettings {
+                    size: std::mem::size_of::<CEFBrowserSettings>(),
+                    ..std::mem::zeroed()
+                };
 
-            let point: CEFPoint = std::mem::zeroed();
-            let client = ORIGIN_CEF_CLIENT.load(Ordering::SeqCst);
-            ((*host).show_dev_tools)(host, &win_info, client, &mut settings, &point);
+                let point: CEFPoint = std::mem::zeroed();
+                let client = ORIGIN_CEF_CLIENT.load(Ordering::SeqCst);
+                ((*host).show_dev_tools)(host, &win_info, client, &mut settings, &point);
+            }
             return 1;
         }
     }

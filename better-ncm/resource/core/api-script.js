@@ -1,4 +1,3 @@
-
 const BETTERNCM_API_PATH = "http://localhost:3248/api";
 const BETTERNCM_FILES_PATH = "http://localhost:3248/local";
 const betterncm = {
@@ -74,6 +73,12 @@ const betterncm = {
         }
     },
     utils: {
+        async showConsole() {
+            return await (await fetch(BETTERNCM_API_PATH + "/utils/show_console")).text();
+        },
+        async hideConsole() {
+            return await (await fetch(BETTERNCM_API_PATH + "/utils/hide_console")).text();
+        },
         waitForElement(selector, interval = 100) {
             return betterncm.utils.waitForFunction(() => document.querySelector(selector));
         }, waitForFunction(func, interval = 100) {
@@ -89,6 +94,7 @@ const betterncm = {
         }, delay(ms) {
             return new Promise((rs) => setTimeout(rs, ms));
         }
+
     }
 };
 window.betterncm = betterncm;
