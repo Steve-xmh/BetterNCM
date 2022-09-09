@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use libc::*;
 use winapi::{
     shared::windef::{HMENU, HWND},
@@ -86,6 +88,18 @@ pub struct CEFString {
     string: *mut wchar_t,
     length: size_t,
     dtor: Option<unsafe extern "stdcall" fn(string: *mut wchar_t) -> c_void>,
+}
+
+impl Display for CEFString {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.string.is_null() {
+            f.write_str("")
+        } else {
+            unsafe {
+                f.write_str(&String::from_utf16_lossy(std::slice::from_raw_parts(self.string, self.length)))
+            }
+        }
+    }
 }
 
 impl Default for CEFString {
@@ -222,12 +236,8 @@ pub struct CEFBrowserHost {
         *mut CEFBrowserSettings,
         *const CEFPoint,
     ) -> c_void, // Placeholder
-    pub close_dev_tools: unsafe extern "stdcall" fn(
-        *mut CEFBrowserHost,
-    ) -> c_void, // Placeholder
-    pub has_dev_tools: unsafe extern "stdcall" fn(
-        *mut CEFBrowserHost,
-    ) -> c_int, // Placeholder
+    pub close_dev_tools: unsafe extern "stdcall" fn(*mut CEFBrowserHost) -> c_void, // Placeholder
+    pub has_dev_tools: unsafe extern "stdcall" fn(*mut CEFBrowserHost) -> c_int, // Placeholder
 }
 
 #[repr(C)]
@@ -430,4 +440,35 @@ pub struct CEFClient {
     pub get_keyboard_handler: CallbackFn<CEFClient, *mut CEFKeyBoardHandler>,
     pub(crate) get_life_span_handler: CallbackFn, // Placeholder
     pub get_load_handler: CallbackFn<CEFClient, *mut CEFLoadHandler>,
+}
+
+#[repr(C)]
+pub struct CEFCommandLine {
+    pub base: CEFBase,
+    pub(crate) is_valid: CallbackFn,                 // Placeholder
+    pub(crate) is_read_only: CallbackFn,             // Placeholder
+    pub(crate) copy: CallbackFn,                     // Placeholder
+    pub(crate) init_from_argv: CallbackFn,           // Placeholder
+    pub(crate) init_from_string: CallbackFn,         // Placeholder
+    pub(crate) reset: CallbackFn,                    // Placeholder
+    pub(crate) get_argv: CallbackFn,                 // Placeholder
+    pub(crate) get_command_line_string: CallbackFn,  // Placeholder
+    pub(crate) get_program: CallbackFn,              // Placeholder
+    pub(crate) set_program: CallbackFn,              // Placeholder
+    pub(crate) has_switches: CallbackFn,             // Placeholder
+    pub(crate) has_switch: CallbackFn,               // Placeholder
+    pub(crate) get_switch_value: CallbackFn,         // Placeholder
+    pub(crate) get_switches: CallbackFn,             // Placeholder
+    pub(crate) append_switch: unsafe extern "stdcall" fn(*mut CEFCommandLine, *const CEFString),            // Placeholder
+    pub(crate) append_switch_with_value: CallbackFn, // Placeholder
+    pub(crate) has_arguments: CallbackFn,            // Placeholder
+    pub(crate) get_arguments: CallbackFn,            // Placeholder
+    pub(crate) append_argument: CallbackFn,          // Placeholder
+    pub(crate) prepend_wrapper: CallbackFn,          // Placeholder
+}
+#[repr(C)]
+pub struct CEFApp {
+    pub base: CEFBase,
+    pub on_before_command_line_processing:
+        unsafe extern "stdcall" fn(*mut CEFApp, *const CEFString, *mut CEFCommandLine),
 }

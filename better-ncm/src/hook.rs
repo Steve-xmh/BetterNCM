@@ -6,6 +6,7 @@ const EAPI_SHARK: &str = include_str!("../resource/core/eapi-shark.js");
 const API_SCRIPT: &str = include_str!("../resource/core/api-script.js");
 const LOADER_SCRIPT: &str = include_str!("../resource/core/loader-script.js");
 const PLUGIN_MARKET: &str = include_str!("../resource/PluginMarket/plugin.js");
+const FRAMEWORK: &str = include_str!("../../better-ncm-framework/dist/better-ncm-framework.iife.js");
 
 static SERVER_INITIALIZED: AtomicBool = AtomicBool::new(false);
 
@@ -43,6 +44,8 @@ pub(crate) fn install_hook() {
             f.execute_java_script(LOADER_SCRIPT);
             println!("Running Plugin Market Script");
             f.execute_java_script(PLUGIN_MARKET);
+            println!("Running Framework");
+            f.execute_java_script(FRAMEWORK);
         }
     }
 

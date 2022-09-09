@@ -35,11 +35,15 @@ fn get_module_symbol_address(module: &str, symbol: &str) -> Option<usize> {
 static_detour! {
     static FnHookCEFV8ContextGetCurrentContextHook: unsafe extern "cdecl" fn() -> *mut c_void;
     static FnHookCEFBrowserHostCreateBrowserSyncHook: unsafe extern "cdecl" fn(*mut c_void, *mut CEFClient, *mut c_void, *mut c_void, *mut c_void, *mut c_void) -> c_int;
-    static FnHookCEFInitializeHook: unsafe extern "cdecl" fn(*mut c_void, *mut c_void, *mut c_void, *mut c_void) -> c_int;
+    static FnHookCEFInitializeHook: unsafe extern "cdecl" fn(*mut c_void, *mut c_void, *mut CEFApp, *mut c_void) -> c_int;
 }
 
 static ORIGIN_CEF_LOAD_HANDLER: AtomicPtr<c_void> = AtomicPtr::new(std::ptr::null_mut());
 static ORIGIN_CEF_KEYBOARD_HANDLER: AtomicPtr<c_void> = AtomicPtr::new(std::ptr::null_mut());
+static ORIGIN_CEF_ON_BEFORE_COMMAND_LINE_PROCESSING_HANDLER: AtomicPtr<c_void> =
+    AtomicPtr::new(std::ptr::null_mut());
+static ORIGIN_CEF_APPEND_SWITCH_HANDLER: AtomicPtr<c_void> =
+    AtomicPtr::new(std::ptr::null_mut());
 
 static ORIGIN_CEF_CLIENT: AtomicPtr<CEFClient> = AtomicPtr::new(std::ptr::null_mut());
 static PUB_ON_LOAD_HOOK: Mutex<fn(&mut CEFBrowser, &mut CEFFrame, CEFTransitionType)> =
@@ -79,7 +83,8 @@ unsafe extern "stdcall" fn on_key_event_hook(
             } else {
                 let mut win_info: CEFWindowInfo = std::mem::zeroed();
 
-                win_info.style = WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE;
+                win_info.style =
+                    WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE;
                 win_info.x = CW_USEDEFAULT;
                 win_info.y = CW_USEDEFAULT;
                 win_info.width = CW_USEDEFAULT;
@@ -130,6 +135,34 @@ unsafe extern "stdcall" fn get_keyboard_handler_hook(
     }
 }
 
+unsafe extern "stdcall" fn append_switch_hook(
+    command_line: *mut CEFCommandLine,
+    name: *const CEFString,
+) {
+    let origin = ORIGIN_CEF_APPEND_SWITCH_HANDLER.load(Ordering::SeqCst);
+    if !origin.is_null() {
+        let origin: unsafe extern "stdcall" fn(*mut CEFCommandLine, *const CEFString) = std::mem::transmute(origin);
+        if (*name).to_string() != "--disable-gpu" {
+            origin(command_line, name);
+        }
+    }
+}
+unsafe extern "stdcall" fn before_command_line_processing_hook(
+    app: *mut CEFApp,
+    process_type: *const CEFString,
+    command_line: *mut CEFCommandLine,
+) {
+    let origin = ORIGIN_CEF_ON_BEFORE_COMMAND_LINE_PROCESSING_HANDLER.load(Ordering::SeqCst);
+    
+    ORIGIN_CEF_APPEND_SWITCH_HANDLER.store((*command_line).append_switch as *mut c_void, Ordering::SeqCst);
+    (*command_line).append_switch = append_switch_hook;
+    
+    if !origin.is_null() {
+        let origin: unsafe extern "stdcall" fn(*mut CEFApp, *const CEFString, *mut CEFCommandLine) = std::mem::transmute(origin);
+        origin(app, process_type, command_line);
+    }
+}
+
 fn cef_browser_host_create_browser_sync_hook(
     window_info: *mut c_void,
     client: *mut CEFClient,
@@ -161,10 +194,18 @@ fn cef_browser_host_create_browser_sync_hook(
 fn cef_initialize_hook(
     args: *mut c_void,
     settings: *mut c_void,
-    application: *mut c_void,
+    application: *mut CEFApp,
     windows_sandbox_info: *mut c_void,
 ) -> c_int {
-    unsafe { FnHookCEFInitializeHook.call(args, settings, application, windows_sandbox_info) }
+    unsafe {
+        ORIGIN_CEF_ON_BEFORE_COMMAND_LINE_PROCESSING_HANDLER.store(
+            (*application).on_before_command_line_processing as *mut c_void,
+            Ordering::SeqCst,
+        );
+
+        (*application).on_before_command_line_processing = before_command_line_processing_hook;
+        FnHookCEFInitializeHook.call(args, settings, application, windows_sandbox_info)
+    }
 }
 
 pub fn install_hooks() {

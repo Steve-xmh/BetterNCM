@@ -2,28 +2,28 @@ use std::{
     io::{BufRead, BufReader, ErrorKind, Read, Write},
     net::{TcpListener, TcpStream},
     sync::{atomic::AtomicBool, Mutex},
-    thread::JoinHandle,
+    thread::JoinHandle, time::Duration,
 };
 
 mod handler;
 
 pub(super) trait TcpStreamExt: Write {
     fn write_ok_response(&mut self) {
-        let _ = self.write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
+        let _ = self.write_all(b"HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 0\r\n\r\n");
     }
 
     fn write_not_found_response(&mut self) {
-        let _ = self.write_all("HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n".as_bytes());
+        let _ = self.write_all("HTTP/1.1 404 Not Found\r\nConnection: close\r\nContent-Length: 0\r\n\r\n".as_bytes());
     }
 
     fn write_text_response(&mut self, content: &str) {
         let length = content.len();
-        let _ = self.write_all(format!("HTTP/1.1 200 OK\r\nContent-Length: {length}\r\nContent-Type: text/plain\r\n\r\n{content}").as_bytes());
+        let _ = self.write_all(format!("HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: {length}\r\nContent-Type: text/plain\r\n\r\n{content}").as_bytes());
     }
 
     fn write_json_response(&mut self, content: &str) {
         let length = content.len();
-        let _ = self.write_all(format!("HTTP/1.1 200 OK\r\nContent-Length: {length}\r\nContent-Type: application/json\r\n\r\n{content}").as_bytes());
+        let _ = self.write_all(format!("HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: {length}\r\nContent-Type: application/json\r\n\r\n{content}").as_bytes());
     }
 }
 
@@ -42,7 +42,9 @@ pub fn init_server() {
                 }
                 match stream {
                     Ok(stream) => {
+                        // println!("[Server] Got TcpStream");
                         handle_stream(stream);
+                        // println!("[Server] TcpStream Dropped");
                     }
                     Err(e) => {
                         println!("[WARN] Connect error: {}", e);
@@ -64,17 +66,19 @@ pub fn init_server() {
 }
 
 fn handle_stream(mut stream: TcpStream) {
-    println!("[Server] Got TcpStream");
     let mut req_data: Vec<u8> = Vec::with_capacity(4096);
     let mut method = "UNKNOWN".to_string();
     let mut path = "UNKNOWN".to_string();
     let mut body_position = None;
     let mut content_length = None;
     let mut buf = [0u8; 16];
+    // println!("Reading request");
+    let _ = stream.set_read_timeout(Some(Duration::from_secs(1)));
     while let Ok(buf_len) = stream.read(&mut buf) {
         if let Some(body_position) = body_position {
             let content_length = content_length.unwrap_or(0);
             if req_data.len() >= body_position + content_length {
+                // println!("Handling request");
                 handler::handle_request(
                     &mut stream,
                     &method,
@@ -110,6 +114,7 @@ fn handle_stream(mut stream: TcpStream) {
                         let content_length = content_length.unwrap_or(0);
                         if content_length == 0 {
                             let body_position = body_position.unwrap_or(0);
+                            // println!("Handling request");
                             handler::handle_request(
                                 &mut stream,
                                 &method,

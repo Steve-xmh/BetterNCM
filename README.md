@@ -13,6 +13,13 @@
 
 ## 编译
 
-务必使用 `nightly` 频道的 Rust 编译器编译，编译目标为 `i686-pc-windows-msvc`
+先构建 `better-ncm-framework`，进入目录，安装好 Yarn，输入以下指令构建：
+
+```bash
+yarn
+yarn build
+```
+
+然后开始构建本体，务必使用 `nightly` 频道的 Rust 编译器编译，编译目标为 `i686-pc-windows-msvc`
 
 如果使用调试构建，则将会同时显示控制台方便查看输出，同时开启针对部分脚本的刷新重载，方便前端调试，发行构建则会去除这些特性。
