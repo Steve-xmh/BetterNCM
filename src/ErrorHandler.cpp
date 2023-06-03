@@ -131,12 +131,22 @@ std::wstring GetBacktrace(const EXCEPTION_POINTERS* ExceptionInfo) {
 
 	// Initialize the stack frame
 	STACKFRAME64 stackFrame = { 0 };
+#ifdef _X86
 	stackFrame.AddrPC.Offset = contextRecord->Eip;
 	stackFrame.AddrPC.Mode = AddrModeFlat;
 	stackFrame.AddrFrame.Offset = contextRecord->Ebp;
 	stackFrame.AddrFrame.Mode = AddrModeFlat;
 	stackFrame.AddrStack.Offset = contextRecord->Esp;
 	stackFrame.AddrStack.Mode = AddrModeFlat;
+#endif
+#ifdef _X86_64
+	stackFrame.AddrPC.Offset = contextRecord->Rip;
+	stackFrame.AddrPC.Mode = AddrModeFlat;
+	stackFrame.AddrFrame.Offset = contextRecord->Rbp;
+	stackFrame.AddrFrame.Mode = AddrModeFlat;
+	stackFrame.AddrStack.Offset = contextRecord->Rsp;
+	stackFrame.AddrStack.Mode = AddrModeFlat;
+#endif
 
 	DWORD64 displacement = 0;
 	// Walk the call stack and append each frame to the string
@@ -249,9 +259,16 @@ std::wstring PrintExceptionInfo(EXCEPTION_POINTERS* ExceptionInfo) {
 	Stream << L"Exception address: 0x" << std::hex << ExceptionRecord->ExceptionAddress << std::endl;
 
 	Stream << L"Context record:" << std::endl;
+#ifdef _X86
 	Stream << L"  EIP: 0x" << std::hex << ContextRecord->Eip << std::endl;
 	Stream << L"  ESP: 0x" << std::hex << ContextRecord->Esp << std::endl;
 	Stream << L"  EBP: 0x" << std::hex << ContextRecord->Ebp << std::endl;
+#endif
+#ifdef _X86_64
+	Stream << L"  RIP: 0x" << std::hex << ContextRecord->Rip << std::endl;
+	Stream << L"  RSP: 0x" << std::hex << ContextRecord->Rsp << std::endl;
+	Stream << L"  RBP: 0x" << std::hex << ContextRecord->Rbp << std::endl;
+#endif
 
 	Stream << L"Backtrace:\n  See console for detail" << std::endl;
 

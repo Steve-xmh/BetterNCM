@@ -367,15 +367,18 @@ std::thread* App::create_server(const std::string& apiKey) {
 
 		svr->Get("/api/app/set_rounded_corner", [&](const httplib::Request& req, httplib::Response& res) {
 			checkApiKey;
+#ifdef _X86
 			bool enable = req.get_param_value("enable") == "true";
 			HWND ncmWin = FindWindow(L"OrpheusBrowserHost", nullptr);
 			DWM_WINDOW_CORNER_PREFERENCE preference = enable ? DWMWCP_ROUND : DWMWCP_DONOTROUND;
+
 			DwmSetWindowAttribute(ncmWin, DWMWA_WINDOW_CORNER_PREFERENCE, &preference, sizeof(preference));
 
 			HWND ncmShadow = nullptr;
 			while (ncmShadow = FindWindowEx(nullptr, ncmShadow, L"OrpheusShadow", nullptr))
 				SetLayeredWindowAttributes(ncmShadow, 0, 0, LWA_ALPHA);
 
+#endif
 			res.status = 200;
 		});
 
